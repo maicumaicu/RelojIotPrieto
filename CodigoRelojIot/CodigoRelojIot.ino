@@ -114,8 +114,7 @@ void loop() {
 }
 
 void ShowControl() {
-  if (millis() > lastTimeBotRan + botRequestDelay) {
-    switch (ClockState) {
+  switch (ClockState) {
       case TempState:
         printLocalTemp();
         break;
@@ -123,6 +122,8 @@ void ShowControl() {
         printLocalTime();
         break;
     }
+  if (millis() > lastTimeBotRan + botRequestDelay) {
+    ClockState = !ClockState;
     lastTimeBotRan = millis();
   }
 }
