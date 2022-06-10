@@ -13,18 +13,25 @@
 #define TempState 1
 
 const char* ssid     = "ORT-IoT";
-const char* password = "OrtIOTnew22";
+const char* password = "OrtIOTnew22$";
 
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = -10800;
 const int   daylightOffset_sec = 0;
+void printLocalTime();
+void  changeLocalTime();
+void ShowControl();
+void handleNewMessages(int numNewMessages);
 
-int tempChangeDelay = 500;
+int tempChangeDelay = 3000;
 unsigned long lastTempChange;
 int ClockState = 0;
 
 char hour[3];
 char minute[3];
+
+int lastHour;
+int lastMinute;
 
 WiFiClientSecure client;
 UniversalTelegramBot bot(BOTtoken, client);
@@ -64,22 +71,22 @@ void setup() {
   printLocalTime();
 
   //disconnect WiFi as it's no longer needed
-  WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
+  
 
   client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
-  bot.sendMessage(CHAT_ID, "Bot Started", "");
+  //bot.sendMessage(CHAT_ID, "Bot Started", "");
+
 
   if (!bmp.begin()) {
     Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
-  }
+    }
 
   /* Default settings from datasheet. */
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     
+                  Adafruit_BMP280::SAMPLING_X2,     
+                  Adafruit_BMP280::SAMPLING_X16,    
+                  Adafruit_BMP280::FILTER_X16,      
+                  Adafruit_BMP280::STANDBY_MS_500);
 
 
   digito_1.begin();
@@ -88,11 +95,11 @@ void setup() {
   digito_4.begin();
   puntitos.begin();
 
-  digito_1.setBrightness(100);
-  digito_2.setBrightness(100);
-  digito_3.setBrightness(100);
-  digito_4.setBrightness(100);
-  puntitos.setBrightness(100);
+  digito_1.setBrightness(255);
+  digito_2.setBrightness(255);
+  digito_3.setBrightness(255);
+  digito_4.setBrightness(255);
+  puntitos.setBrightness(255);
 
   puntitos.setPixelColor(0, 0X009688);
   puntitos.setPixelColor(1, 0X009688);
@@ -115,16 +122,16 @@ void loop() {
 
 void ShowControl() {
   switch (ClockState) {
-      case TempState:
-        printLocalTemp();
-        break;
-      case HourState:
-        printLocalTime();
-        break;
-    }
-  if (millis() > lastTimeBotRan + botRequestDelay) {
+    case TempState:
+      printLocalTemp();
+      break;
+    case HourState:
+      printLocalTime();
+      break;
+  }
+  if (millis() > lastTempChange + tempChangeDelay) {
     ClockState = !ClockState;
-    lastTimeBotRan = millis();
+    lastTempChange = millis();
   }
 }
 
@@ -157,6 +164,9 @@ void printLocalTemp() {
   }
 
   letra_C(&digito_3);
+  clear_tira(&digito_4);
+  puntitos.clear();
+  puntitos.show();
 }
 
 void handleNewMessages(int numNewMessages) {
@@ -174,8 +184,8 @@ void handleNewMessages(int numNewMessages) {
     String from_name = bot.messages[i].from_name;
 
     if (text == "/start") {
-      String welcome = "Welcome." + from_name + ".\n";
-      welcome += "Introduce the values just like this (red),(green),(blue).";
+      String welcome = "Hola " + from_name + "!\n";
+      welcome += "Escribí los colores así, de 0 a 255: /rojo,verde,azul/";
       bot.sendMessage(chat_id, welcome, "");
     }
     if (text.substring(0, 1) == "/" && text.substring(text.length() - 1, text.length()) == "/") {
@@ -184,7 +194,7 @@ void handleNewMessages(int numNewMessages) {
       red = text.substring(1, firstComma).toInt();
       green = text.substring(firstComma + 1, secondComma).toInt();
       blue = text.substring(secondComma + 1, text.length() - 1).toInt();
-      String confirmationMessage = "Color changed to R: ";
+      String confirmationMessage = "Color cambiado a R: ";
       confirmationMessage.concat(red);
       confirmationMessage.concat(" G: ");
       confirmationMessage.concat(green);
@@ -210,11 +220,10 @@ void changeLocalTime() {
 }
 
 void printLocalTime() {
-
+  //if (lastHour != atoi(hour) || lastMinute != atoi(minute)) {
   puntitos.setPixelColor(0, color);
   puntitos.setPixelColor(1, color);
   puntitos.show();
-
   switch (calcularDecena(atoi(hour))) {
     case 0: numero_0 (&digito_1); break;
     case 1: numero_1 (&digito_1); break;
@@ -265,8 +274,9 @@ void printLocalTime() {
     case 8: numero_8 (&digito_4); break;
     case 9: numero_9 (&digito_4); break;
   }
-  delay(2000);
+  //}
 }
+
 
 int calcularUnidad(int num) {
   return num % 10;
@@ -403,6 +413,18 @@ void letra_C (Adafruit_NeoPixel *tira) {
   tira->setPixelColor(3, 0, 0, 0);
   tira->setPixelColor(4, color);
   tira->setPixelColor(5, color);
+  tira->setPixelColor(6, 0, 0, 0);
+
+  tira->show();
+}
+
+void clear_tira (Adafruit_NeoPixel *tira) {
+  tira->setPixelColor(0, 0, 0, 0);
+  tira->setPixelColor(1, 0, 0, 0);
+  tira->setPixelColor(2, 0, 0, 0);
+  tira->setPixelColor(3, 0, 0, 0);
+  tira->setPixelColor(4, 0, 0, 0);
+  tira->setPixelColor(5, 0, 0, 0);
   tira->setPixelColor(6, 0, 0, 0);
 
   tira->show();
