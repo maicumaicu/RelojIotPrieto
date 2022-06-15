@@ -18,6 +18,9 @@ const char* password = "OrtIOTnew22$";
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = -10800;
 const int   daylightOffset_sec = 0;
+
+int ultimaTemp = 0;
+
 void printLocalTime();
 void  changeLocalTime();
 void ShowControl();
@@ -71,7 +74,7 @@ void setup() {
   printLocalTime();
 
   //disconnect WiFi as it's no longer needed
-  
+
 
   client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
   //bot.sendMessage(CHAT_ID, "Bot Started", "");
@@ -79,13 +82,13 @@ void setup() {
 
   if (!bmp.begin()) {
     Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
-    }
+  }
 
   /* Default settings from datasheet. */
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     
-                  Adafruit_BMP280::SAMPLING_X2,     
-                  Adafruit_BMP280::SAMPLING_X16,    
-                  Adafruit_BMP280::FILTER_X16,      
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
+                  Adafruit_BMP280::SAMPLING_X2,
+                  Adafruit_BMP280::SAMPLING_X16,
+                  Adafruit_BMP280::FILTER_X16,
                   Adafruit_BMP280::STANDBY_MS_500);
 
 
@@ -137,36 +140,39 @@ void ShowControl() {
 
 void printLocalTemp() {
   int temp = bmp.readTemperature();
-  switch (calcularDecena(temp)) {
-    case 0: numero_0 (&digito_1); break;
-    case 1: numero_1 (&digito_1); break;
-    case 2: numero_2 (&digito_1); break;
-    case 3: numero_3 (&digito_1); break;
-    case 4: numero_4 (&digito_1); break;
-    case 5: numero_5 (&digito_1); break;
-    case 6: numero_6 (&digito_1); break;
-    case 7: numero_7 (&digito_1); break;
-    case 8: numero_8 (&digito_1); break;
-    case 9: numero_9 (&digito_1); break;
-  }
+  if (temp < 80 ) {
+    ultimaTemp = temp;
+    switch (calcularDecena(ultimaTemp)) {
+      case 0: numero_0 (&digito_1); break;
+      case 1: numero_1 (&digito_1); break;
+      case 2: numero_2 (&digito_1); break;
+      case 3: numero_3 (&digito_1); break;
+      case 4: numero_4 (&digito_1); break;
+      case 5: numero_5 (&digito_1); break;
+      case 6: numero_6 (&digito_1); break;
+      case 7: numero_7 (&digito_1); break;
+      case 8: numero_8 (&digito_1); break;
+      case 9: numero_9 (&digito_1); break;
+    }
 
-  switch (calcularUnidad(temp)) {
-    case 0: numero_0 (&digito_2); break;
-    case 1: numero_1 (&digito_2); break;
-    case 2: numero_2 (&digito_2); break;
-    case 3: numero_3 (&digito_2); break;
-    case 4: numero_4 (&digito_2); break;
-    case 5: numero_5 (&digito_2); break;
-    case 6: numero_6 (&digito_2); break;
-    case 7: numero_7 (&digito_2); break;
-    case 8: numero_8 (&digito_2); break;
-    case 9: numero_9 (&digito_2); break;
-  }
+    switch (calcularUnidad(ultimaTemp)) {
+      case 0: numero_0 (&digito_2); break;
+      case 1: numero_1 (&digito_2); break;
+      case 2: numero_2 (&digito_2); break;
+      case 3: numero_3 (&digito_2); break;
+      case 4: numero_4 (&digito_2); break;
+      case 5: numero_5 (&digito_2); break;
+      case 6: numero_6 (&digito_2); break;
+      case 7: numero_7 (&digito_2); break;
+      case 8: numero_8 (&digito_2); break;
+      case 9: numero_9 (&digito_2); break;
+    }
 
-  letra_C(&digito_3);
-  clear_tira(&digito_4);
-  puntitos.clear();
-  puntitos.show();
+    letra_C(&digito_3);
+    clear_tira(&digito_4);
+    puntitos.clear();
+    puntitos.show();
+  }
 }
 
 void handleNewMessages(int numNewMessages) {
